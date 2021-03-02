@@ -11,6 +11,7 @@ const allowed_workflow_conclusions = ["failure", "success", "neutral", "cancelle
 
 async function main() {
     try {
+        console.log("==> In the custom action-download-artifact action")
         const token = core.getInput("github_token", { required: true })
         const workflow = core.getInput("workflow", { required: true })
         const [owner, repo] = core.getInput("repo", { required: true }).split("/")
@@ -58,6 +59,7 @@ async function main() {
         }
 
         if (!runID) {
+            console.log("No RunID specified. Going to get the artifacts manually")
             const endpoint = "GET /repos/:owner/:repo/actions/workflows/:id/runs?status=:status&branch=:branch"
             const params = {
                 owner: owner,
@@ -67,6 +69,7 @@ async function main() {
                 status: workflow_conclusion,
             }
             for await (const runs of client.paginate.iterator(endpoint, params)) {
+                console.log("Got the runs")
                 const run = runs.data.find(r => {
                     if (commit) {
                         return r.head_sha == commit
@@ -88,6 +91,8 @@ async function main() {
             repo: repo,
             run_id: runID,
         })
+
+        console.log("Got the artifacts: ", JSON.stringify(artifacts))
 
         // One artifact or all if `name` input is not specified.
         if (name) {
